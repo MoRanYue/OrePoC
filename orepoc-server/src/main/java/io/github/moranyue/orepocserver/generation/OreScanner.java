@@ -43,15 +43,17 @@ public class OreScanner {
     );
 
     private final JavaPlugin plugin;
+    private final io.github.moranyue.orepocserver.generation.OreCache cache;
 
-    public OreScanner(JavaPlugin plugin) {
+    public OreScanner(JavaPlugin plugin, io.github.moranyue.orepocserver.generation.OreCache cache) {
         this.plugin = plugin;
+        this.cache = cache;
     }
 
     /**
      * Scan a chunk for all ore blocks.
-     * Only scans chunks that are already fully generated to avoid blocking the server thread.
-     * Returns empty list if the chunk is not yet generated (client can retry later).
+     * If the chunk is not yet generated, triggers async generation and returns empty.
+     * When async generation completes, the chunk is scanned and cached automatically.
      */
     public List<OrePosition> scanChunk(int chunkX, int chunkZ) {
         World world = Bukkit.getWorlds().get(0);
@@ -60,17 +62,34 @@ public class OreScanner {
             return Collections.emptyList();
         }
 
-        // Only scan chunks that are already fully generated — never force generation
-        // to avoid blocking the main server thread on chunk generation tasks
-        if (!world.isChunkGenerated(chunkX, chunkZ)) {
-            plugin.getLogger().fine("Chunk " + chunkX + "," + chunkZ + " not yet generated, skipping");
-            return Collections.emptyList();
+        // If chunk is already generated, scan it synchronously
+        if (world.isChunkGenerated(chunkX, chunkZ)) {
+            return scanGeneratedChunk(world, chunkX, chunkZ);
         }
 
+        // Chunk not yet generated — trigger async generation and return empty
+        plugin.getLogger().info("Triggering async generation for chunk " + chunkX + "," + chunkZ);
+        world.getChunkAtAsync(chunkX, chunkZ).thenAccept(chunk -> {
+            // Chunk is now generated and loaded on the main thread
+            plugin.getLogger().info("Async generation complete for chunk " + chunkX + "," + chunkZ);
+            List<OrePosition> ores = scanGeneratedChunk(world, chunkX, chunkZ);
+            cache.put(chunkX, chunkZ, ores);
+        }).exceptionally(e -> {
+            plugin.getLogger().warning("Async generation failed for chunk " + chunkX + "," + chunkZ + ": " + e.getMessage());
+            return null;
+        });
+
+        return Collections.emptyList();
+    }
+
+    /**
+     * Scan a fully-generated chunk for ore blocks.
+     * Must only be called for chunks where isChunkGenerated() returns true.
+     */
+    private List<OrePosition> scanGeneratedChunk(World world, int chunkX, int chunkZ) {
         List<OrePosition> result = new ArrayList<>();
 
         try {
-            // Load the already-generated chunk (won't trigger generation)
             Chunk chunk = world.getChunkAt(chunkX, chunkZ);
             if (chunk == null) {
                 plugin.getLogger().warning("Failed to load chunk " + chunkX + "," + chunkZ);

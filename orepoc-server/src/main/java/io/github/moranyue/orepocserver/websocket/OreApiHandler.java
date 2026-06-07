@@ -23,7 +23,7 @@ public class OreApiHandler implements HttpHandler {
     public OreApiHandler(OrePocServerPlugin plugin, OreCache cache) {
         this.plugin = plugin;
         this.cache = cache;
-        this.scanner = new OreScanner(plugin);
+        this.scanner = new OreScanner(plugin, cache);
     }
 
     @Override
