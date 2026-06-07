@@ -1,0 +1,51 @@
+# Gradle
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# IDE
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+*.class
+
+# OS
+Thumbs.db
+Desktop.ini
+ehthumbs.db
+*.log
+
+# Minecraft
+run/
+caches/
+versions/
+
+# Environment
+.env
+*.local
+
+# Java
+*.class
+*.jar
+!**/build/libs/*.jar
+!gradle/wrapper/gradle-wrapper.jar
+
+# Node (for potential future web UI)
+node_modules/
+package-lock.json
+
+# Temporary files
+*.tmp
+*.bak
+*.orig
+
+# Project specific
+orepoc-server/build/

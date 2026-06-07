@@ -1,0 +1,36 @@
+plugins {
+    id 'java'
+}
+
+group = 'io.github.moranyue'
+version = '0.1.0'
+
+repositories {
+    mavenCentral()
+    maven {
+        name = "papermc"
+        url = "https://repo.papermc.io/repository/maven-public/"
+    }
+}
+
+dependencies {
+    compileOnly "io.papermc.paper:paper-api:26.1.2.build.69-stable"
+    implementation 'com.google.code.gson:gson:2.11.0'
+}
+
+java {
+    toolchain.languageVersion.set(JavaLanguageVersion.of(25))
+}
+
+processResources {
+    filesMatching("plugin.yml") {
+        expand version: version
+    }
+}
+
+jar {
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}

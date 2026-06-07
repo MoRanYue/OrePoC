@@ -1,0 +1,3 @@
+# OrePoC Server Plugin Configuration
+port: 32567
+cache-size: 1024

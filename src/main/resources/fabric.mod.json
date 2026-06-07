@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "id": "orepoc",
+  "version": "${version}",
+  "name": "Ore PoC",
+  "description": "Client-side ore rendering override using seed-based local world generation.",
+  "authors": [
+    "MoRanYue"
+  ],
+  "license": "MIT",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "io.github.moranyue.orepoc.OrePocClient"
+    ]
+  },
+  "mixins": [
+    "orepoc.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.19.2",
+    "minecraft": "~26.1.2",
+    "java": ">=25",
+    "fabric-api": "*"
+  }
+}

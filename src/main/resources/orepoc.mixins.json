@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "package": "io.github.moranyue.orepoc.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "client": [
+    "ChatScreenMixin",
+    "ChunkDataMixin",
+    "LevelChunkBlockStateMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
