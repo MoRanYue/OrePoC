@@ -1,7 +1,7 @@
-name: OrePocServer
+name: Ore PoC Server
 version: ${version}
 main: io.github.moranyue.orepocserver.OrePocServerPlugin
 api-version: '26.1.2'
 author: MoRanYue
-description: Server-side ore generation provider for OrePoC client mod
-website: https://github.com/moranyue/orepoc
+description: Server-side ore generation provider for OrePoC client mod.
+website: https://github.com/MoRanYue/OrePoC

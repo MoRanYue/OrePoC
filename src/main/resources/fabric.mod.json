@@ -7,6 +7,9 @@
   "authors": [
     "MoRanYue"
   ],
+  "contact": {
+    "sources": "https://github.com/MoRanYue/OrePoC"
+  },
   "license": "MIT",
   "environment": "client",
   "entrypoints": {
