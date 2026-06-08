@@ -481,7 +481,8 @@ public final class LocalWorldGenerator {
             // Additional blocks that may be used by anti-xray or custom ore gen
             || state.is(Blocks.MOSSY_COBBLESTONE)
             || state.is(Blocks.AMETHYST_BLOCK)
-            || state.is(Blocks.GILDED_BLACKSTONE);
+            || state.is(Blocks.GILDED_BLACKSTONE)
+            || state.is(Blocks.BUDDING_AMETHYST);
     }
 
     public Map<BlockPos, BlockState> getChunkOres(int chunkX, int chunkZ) {

@@ -216,6 +216,7 @@ public final class RemoteGenerator {
             case "minecraft:mossy_cobblestone" -> Blocks.MOSSY_COBBLESTONE.defaultBlockState();
             case "minecraft:amethyst_block" -> Blocks.AMETHYST_BLOCK.defaultBlockState();
             case "minecraft:gilded_blackstone" -> Blocks.GILDED_BLACKSTONE.defaultBlockState();
+            case "minecraft:budding_amethyst" -> Blocks.BUDDING_AMETHYST.defaultBlockState();
             default -> {
                 LOGGER.warn("Unknown block type: {}", blockStr);
                 yield null;

@@ -41,7 +41,8 @@ public class OreScanner {
         // Additional blocks that may be used by anti-xray or custom ore gen
         Material.MOSSY_COBBLESTONE,
         Material.AMETHYST_BLOCK,
-        Material.GILDED_BLACKSTONE
+        Material.GILDED_BLACKSTONE,
+        Material.BUDDING_AMETHYST
     );
 
     private final JavaPlugin plugin;
