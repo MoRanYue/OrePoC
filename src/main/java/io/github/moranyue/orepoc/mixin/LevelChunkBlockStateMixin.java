@@ -29,6 +29,10 @@ public class LevelChunkBlockStateMixin {
 
         BlockState original = cir.getReturnValue();
 
+        // If the server says the block is air (e.g. after being mined),
+        // don't override — respect the mining and prevent ghost blocks.
+        if (original.isAir()) return;
+
         // Step 1: Always check for a remote prediction first.
         // This works even after clearOresInLoadedChunks() replaced ore with stone.
         BlockState remoteOre = gen.getOreAt(pos);
