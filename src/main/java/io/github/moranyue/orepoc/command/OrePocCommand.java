@@ -23,7 +23,7 @@ public class OrePocCommand {
                 .then(argument("seed", LongArgumentType.longArg())
                     .executes(OrePocCommand::executeSetSeed)))
             .then(literal("set_server")
-                .then(argument("host", StringArgumentType.word())
+                .then(argument("host", StringArgumentType.string())
                     .then(argument("port", IntegerArgumentType.integer(1, 65535))
                         .executes(OrePocCommand::executeSetServer))
                     .executes(ctx -> {

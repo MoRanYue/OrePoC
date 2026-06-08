@@ -139,6 +139,8 @@ public class ChunkDataMixin {
             || state.is(net.minecraft.world.level.block.Blocks.RAW_COPPER_BLOCK)
             || state.is(net.minecraft.world.level.block.Blocks.RAW_GOLD_BLOCK)
             // Additional blocks that may be used by anti-xray or custom ore gen
-            || state.is(net.minecraft.world.level.block.Blocks.MOSSY_COBBLESTONE);
+            || state.is(net.minecraft.world.level.block.Blocks.MOSSY_COBBLESTONE)
+            || state.is(net.minecraft.world.level.block.Blocks.AMETHYST_BLOCK)
+            || state.is(net.minecraft.world.level.block.Blocks.GILDED_BLACKSTONE);
     }
 }

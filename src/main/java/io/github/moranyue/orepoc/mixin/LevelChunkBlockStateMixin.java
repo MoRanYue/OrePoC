@@ -66,6 +66,8 @@ public class LevelChunkBlockStateMixin {
             || state.is(Blocks.RAW_COPPER_BLOCK)
             || state.is(Blocks.RAW_GOLD_BLOCK)
             // Additional blocks that may be used by anti-xray or custom ore gen
-            || state.is(Blocks.MOSSY_COBBLESTONE);
+            || state.is(Blocks.MOSSY_COBBLESTONE)
+            || state.is(Blocks.AMETHYST_BLOCK)
+            || state.is(Blocks.GILDED_BLACKSTONE);
     }
 }

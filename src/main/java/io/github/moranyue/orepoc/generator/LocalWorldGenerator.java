@@ -101,11 +101,6 @@ public final class LocalWorldGenerator {
         originalLock.writeLock().lock();
         try { originalServerStates.clear(); } finally { originalLock.writeLock().unlock(); }
 
-        // Also notify RemoteGenerator if available
-        if (RemoteGenerator.INSTANCE.isAvailable()) {
-            RemoteGenerator.INSTANCE.setSeed(seed);
-        }
-
         // Only trigger local generation if mode is LOCAL
         if (mode == Mode.LOCAL) {
             triggerGenerationForCurrentPosition();
@@ -484,16 +479,26 @@ public final class LocalWorldGenerator {
             || state.is(Blocks.RAW_COPPER_BLOCK)
             || state.is(Blocks.RAW_GOLD_BLOCK)
             // Additional blocks that may be used by anti-xray or custom ore gen
-            || state.is(Blocks.MOSSY_COBBLESTONE);
+            || state.is(Blocks.MOSSY_COBBLESTONE)
+            || state.is(Blocks.AMETHYST_BLOCK)
+            || state.is(Blocks.GILDED_BLACKSTONE);
     }
 
     public Map<BlockPos, BlockState> getChunkOres(int chunkX, int chunkZ) {
+        return getChunkOres(chunkX, chunkZ, null);
+    }
+
+    public Map<BlockPos, BlockState> getChunkOres(int chunkX, int chunkZ, String dimension) {
         if (!seedSet || mode == Mode.NONE) return null;
 
-        // If REMOTE mode, delegate to RemoteGenerator
+        // If REMOTE mode, delegate to RemoteGenerator with dimension info
         if (mode == Mode.REMOTE) {
             if (RemoteGenerator.INSTANCE.isAvailable()) {
-                return RemoteGenerator.INSTANCE.getChunkOres(chunkX, chunkZ);
+                // Auto-detect dimension from current level if not provided
+                if (dimension == null) {
+                    dimension = resolveCurrentDimension();
+                }
+                return RemoteGenerator.INSTANCE.getChunkOres(dimension, chunkX, chunkZ);
             } else {
                 // Remote generator not available but mode is REMOTE
                 LOGGER.warn("Remote mode but server unavailable for chunk [{},{}]", chunkX, chunkZ);
@@ -523,6 +528,17 @@ public final class LocalWorldGenerator {
             cacheLock.readLock().unlock();
         }
         return r;
+    }
+
+    /**
+     * Resolve the current dimension's resource location string.
+     */
+    private static String resolveCurrentDimension() {
+        net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+        if (mc.level != null) {
+            return mc.level.dimension().identifier().toString();
+        }
+        return "minecraft:overworld";
     }
 
     public BlockState getOreAt(BlockPos pos) {

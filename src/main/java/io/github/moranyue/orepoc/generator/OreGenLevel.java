@@ -124,7 +124,10 @@ public class OreGenLevel implements WorldGenLevel {
     @Override public void setCurrentlyGenerating(Supplier<String> s) {}
 
     // ServerLevelAccessor
-    @Override public ServerLevel getLevel() { return null; }
+    @Override public ServerLevel getLevel() {
+        throw new UnsupportedOperationException(
+            "OreGenLevel is a client-side simulation and has no associated ServerLevel");
+    }
     @Override public DifficultyInstance getCurrentDifficultyAt(BlockPos pos) { return new DifficultyInstance(level.getDifficulty(), level.getLevelData().getGameTime(), 0, 0.0F); }
     @Override public void addFreshEntityWithPassengers(Entity e) {}
 

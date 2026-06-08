@@ -39,7 +39,9 @@ public class OreScanner {
         Material.RAW_COPPER_BLOCK,
         Material.RAW_GOLD_BLOCK,
         // Additional blocks that may be used by anti-xray or custom ore gen
-        Material.MOSSY_COBBLESTONE
+        Material.MOSSY_COBBLESTONE,
+        Material.AMETHYST_BLOCK,
+        Material.GILDED_BLACKSTONE
     );
 
     private final JavaPlugin plugin;
@@ -54,11 +56,11 @@ public class OreScanner {
      * Scan a chunk for all ore blocks.
      * If the chunk is not yet generated, triggers async generation and returns empty.
      * When async generation completes, the chunk is scanned and cached automatically.
+     * @param world The world/dimension to scan (e.g. overworld, nether, end)
      */
-    public List<OrePosition> scanChunk(int chunkX, int chunkZ) {
-        World world = Bukkit.getWorlds().get(0);
+    public List<OrePosition> scanChunk(World world, int chunkX, int chunkZ) {
         if (world == null) {
-            plugin.getLogger().warning("No world available!");
+            plugin.getLogger().warning("No world provided for scanning chunk " + chunkX + "," + chunkZ);
             return Collections.emptyList();
         }
 
@@ -68,10 +70,9 @@ public class OreScanner {
         }
 
         // Chunk not yet generated — trigger async generation and return empty
-        plugin.getLogger().info("Triggering async generation for chunk " + chunkX + "," + chunkZ);
+        plugin.getLogger().info("Triggering async generation for chunk [" + world.getName() + "] " + chunkX + "," + chunkZ);
         world.getChunkAtAsync(chunkX, chunkZ).thenAccept(chunk -> {
-            // Chunk is now generated and loaded on the main thread
-            plugin.getLogger().info("Async generation complete for chunk " + chunkX + "," + chunkZ);
+            plugin.getLogger().info("Async generation complete for chunk [" + world.getName() + "] " + chunkX + "," + chunkZ);
             List<OrePosition> ores = scanGeneratedChunk(world, chunkX, chunkZ);
             cache.put(chunkX, chunkZ, ores);
         }).exceptionally(e -> {

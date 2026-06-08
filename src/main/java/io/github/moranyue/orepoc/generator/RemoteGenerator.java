@@ -38,16 +38,14 @@ public final class RemoteGenerator {
     private final ReadWriteLock cacheLock = new ReentrantReadWriteLock();
     private final ExecutorService asyncExecutor = Executors.newCachedThreadPool();
     private boolean available = false;
-    private long seed = 0;
-    private boolean seedSet = false;
 
-    private record ChunkKey(int x, int z) {
+    private record ChunkKey(String dimension, int x, int z) {
         @Override public boolean equals(Object o) {
             if (this == o) return true;
             if (!(o instanceof ChunkKey k)) return false;
-            return x == k.x && z == k.z;
+            return x == k.x && z == k.z && dimension.equals(k.dimension);
         }
-        @Override public int hashCode() { return x * 31 + z; }
+        @Override public int hashCode() { return dimension.hashCode() * 31 * 31 + x * 31 + z; }
     }
 
     private String getServerUrl() {
@@ -67,13 +65,13 @@ public final class RemoteGenerator {
         checkConnection();
     }
 
-    /** Check if the Paper server is reachable. */
+    /** Check if the Paper server is reachable (idempotent ping, no side effects). */
     public boolean checkConnection() {
         try {
             HttpRequest req = HttpRequest.newBuilder()
                 .uri(URI.create(getServerUrl()))
                 .header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString("{\"type\":\"set_seed\",\"seed\":0}"))
+                .POST(HttpRequest.BodyPublishers.ofString("{\"type\":\"ping\"}"))
                 .timeout(Duration.ofSeconds(2))
                 .build();
             HttpResponse<String> resp = httpClient.send(req, HttpResponse.BodyHandlers.ofString());
@@ -100,29 +98,17 @@ public final class RemoteGenerator {
     public int getServerPort() { return serverPort; }
 
     public boolean isAvailable() { return available; }
-    public boolean isSeedSet() { return seedSet; }
-
-    public void setSeed(long newSeed) {
-        this.seed = newSeed;
-        this.seedSet = true;
-        cacheLock.writeLock().lock();
-        try { cache.clear(); } finally { cacheLock.writeLock().unlock(); }
-
-        asyncExecutor.submit(() -> {
-            try {
-                sendRequest("{\"type\":\"set_seed\",\"seed\":" + newSeed + "}");
-            } catch (Exception e) {
-                LOGGER.warn("Failed to send seed to server: {}", e.getMessage());
-            }
-        });
-    }
 
     private final Set<ChunkKey> pendingRequests = ConcurrentHashMap.newKeySet();
 
-    public Map<BlockPos, BlockState> getChunkOres(int chunkX, int chunkZ) {
-        if (!seedSet || !available) return null;
+    /**
+     * Get ore predictions for a chunk in a specific dimension.
+     * @param dimension Resource location string, e.g. "minecraft:overworld", "minecraft:the_nether"
+     */
+    public Map<BlockPos, BlockState> getChunkOres(String dimension, int chunkX, int chunkZ) {
+        if (!available) return null;
 
-        ChunkKey key = new ChunkKey(chunkX, chunkZ);
+        ChunkKey key = new ChunkKey(dimension, chunkX, chunkZ);
 
         // Check cache first
         cacheLock.readLock().lock();
@@ -132,16 +118,19 @@ public final class RemoteGenerator {
 
         // Submit async fetch if not already pending
         if (pendingRequests.add(key)) {
-            // LOGGER.info("Fetching chunk [{},{}] from OrePoC server at {}", chunkX, chunkZ, getServerUrl());
+            LOGGER.info("Fetching chunk [{}] {},{} from OrePoC server", dimension, chunkX, chunkZ);
             asyncExecutor.submit(() -> {
                 try {
-                    String json = sendRequest("{\"type\":\"request_chunk\",\"chunkX\":" + chunkX + ",\"chunkZ\":" + chunkZ + "}");
+                    String json = sendRequest(
+                        "{\"type\":\"request_chunk\",\"dimension\":\"" + dimension +
+                        "\",\"chunkX\":" + chunkX + ",\"chunkZ\":" + chunkZ + "}");
                     Map<BlockPos, BlockState> result = parseResponse(json);
-                    // LOGGER.info("Received chunk [{},{}] from OrePoC server: {} ores", chunkX, chunkZ, result.size());
+                    LOGGER.info("Received chunk [{}] {},{} from OrePoC server: {} ores",
+                        dimension, chunkX, chunkZ, result.size());
                     cacheLock.writeLock().lock();
                     try { cache.put(key, result); } finally { cacheLock.writeLock().unlock(); }
                 } catch (Exception e) {
-                    LOGGER.warn("Failed to get chunk [{},{}]: {}", chunkX, chunkZ, e.getMessage());
+                    LOGGER.warn("Failed to get chunk [{}] {},{}: {}", dimension, chunkX, chunkZ, e.getMessage());
                 } finally {
                     pendingRequests.remove(key);
                 }
@@ -150,7 +139,7 @@ public final class RemoteGenerator {
         return null; // Not cached yet, caller should retry later
     }
 
-    /** Wait for all pending requests to complete (used by applyGeneratedOresToWorld). */
+    /** Wait for all pending requests to complete. */
     public void waitForPending() {
         while (!pendingRequests.isEmpty()) {
             try { Thread.sleep(10); } catch (InterruptedException e) { break; }
@@ -191,9 +180,8 @@ public final class RemoteGenerator {
         return result;
     }
 
-    /** Parse a block resource location string (e.g., "minecraft:coal_ore") into BlockState. */
+    /** Parse a block resource location string into BlockState. */
     private BlockState parseBlockState(String blockStr) {
-        // Simple mapping for common ores
         return switch (blockStr) {
             // Overworld ores
             case "minecraft:coal_ore" -> Blocks.COAL_ORE.defaultBlockState();
@@ -221,6 +209,8 @@ public final class RemoteGenerator {
             case "minecraft:raw_copper_block" -> Blocks.RAW_COPPER_BLOCK.defaultBlockState();
             case "minecraft:raw_gold_block" -> Blocks.RAW_GOLD_BLOCK.defaultBlockState();
             case "minecraft:mossy_cobblestone" -> Blocks.MOSSY_COBBLESTONE.defaultBlockState();
+            case "minecraft:amethyst_block" -> Blocks.AMETHYST_BLOCK.defaultBlockState();
+            case "minecraft:gilded_blackstone" -> Blocks.GILDED_BLACKSTONE.defaultBlockState();
             default -> {
                 LOGGER.warn("Unknown block type: {}", blockStr);
                 yield null;

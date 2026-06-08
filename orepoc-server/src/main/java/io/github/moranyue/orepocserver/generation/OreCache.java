@@ -10,7 +10,6 @@ public class OreCache {
     private final int maxSize;
     private final Map<Long, List<OrePosition>> cache;
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
-    private long currentSeed = 0;
 
     public OreCache(int maxSize) {
         this.maxSize = maxSize;
@@ -20,27 +19,6 @@ public class OreCache {
                 return size() > OreCache.this.maxSize;
             }
         };
-    }
-
-    public void setSeed(long seed) {
-        lock.writeLock().lock();
-        try {
-            if (this.currentSeed != seed) {
-                this.currentSeed = seed;
-                cache.clear();
-            }
-        } finally {
-            lock.writeLock().unlock();
-        }
-    }
-
-    public long getCurrentSeed() {
-        lock.readLock().lock();
-        try {
-            return currentSeed;
-        } finally {
-            lock.readLock().unlock();
-        }
     }
 
     public List<OrePosition> get(int chunkX, int chunkZ) {
