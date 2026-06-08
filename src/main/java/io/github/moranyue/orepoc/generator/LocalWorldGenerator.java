@@ -399,6 +399,8 @@ public final class LocalWorldGenerator {
 
                 // Build a set of predicted ore positions for fast lookup
                 Set<BlockPos> predictedPositions = ores.keySet();
+                int chunkMinY = chunk.getMinY();
+                int chunkMaxY = chunkMinY + chunk.getHeight();
 
                 // Step 1: Apply our predicted ores (replace server blocks with local ore)
                 for (Map.Entry<BlockPos, BlockState> entry : ores.entrySet()) {
@@ -406,6 +408,7 @@ public final class LocalWorldGenerator {
                     BlockState localOre = entry.getValue();
 
                     if ((pos.getX() >> 4) != cx || (pos.getZ() >> 4) != cz) continue;
+                    if (pos.getY() < chunkMinY || pos.getY() >= chunkMaxY) continue;
 
                     BlockState serverState = chunk.getBlockState(pos);
                     // Skip if server shows air or fluid (anti-xray or natural)
@@ -893,9 +896,13 @@ public final class LocalWorldGenerator {
                 Map<BlockPos, BlockState> ores = getChunkOres(cx, cz);
                 if (ores == null || ores.isEmpty()) continue;
 
+                int chunkMinY = chunk.getMinY();
+                int chunkMaxY = chunkMinY + chunk.getHeight();
+
                 for (Map.Entry<BlockPos, BlockState> entry : ores.entrySet()) {
                     BlockPos pos = entry.getKey();
                     if ((pos.getX() >> 4) != cx || (pos.getZ() >> 4) != cz) continue;
+                    if (pos.getY() < chunkMinY || pos.getY() >= chunkMaxY) continue;
 
                     BlockState serverState = chunk.getBlockState(pos);
                     if (serverState.isAir() || serverState.liquid()) continue;

@@ -59,12 +59,19 @@ public class ChunkDataMixin {
 
         int replacedCount = 0;
         java.util.List<BlockPos> newApplications = new java.util.ArrayList<>();
+        int chunkMinY = chunk.getMinY();
+        int chunkMaxY = chunkMinY + chunk.getHeight();
         for (Map.Entry<BlockPos, BlockState> entry : orePositions.entrySet()) {
             BlockPos pos = entry.getKey();
             BlockState localOre = entry.getValue();
 
             // Skip if position is not in this chunk
             if ((pos.getX() >> 4) != chunkX || (pos.getZ() >> 4) != chunkZ) {
+                continue;
+            }
+            // Skip if position is outside the chunk's vertical range
+            // (e.g. overworld ore Y mapped to nether chunk with different height)
+            if (pos.getY() < chunkMinY || pos.getY() >= chunkMaxY) {
                 continue;
             }
 
