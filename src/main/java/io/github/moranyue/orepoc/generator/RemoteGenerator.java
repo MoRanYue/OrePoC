@@ -127,8 +127,13 @@ public final class RemoteGenerator {
                     Map<BlockPos, BlockState> result = parseResponse(json);
                     LOGGER.info("Received chunk [{}] {},{} from OrePoC server: {} ores",
                         dimension, chunkX, chunkZ, result.size());
-                    cacheLock.writeLock().lock();
-                    try { cache.put(key, result); } finally { cacheLock.writeLock().unlock(); }
+                    // Only cache non-empty results. If the chunk hasn't been generated
+                    // on the server yet, it returns empty; don't cache that so the
+                    // next access will retry.
+                    if (!result.isEmpty()) {
+                        cacheLock.writeLock().lock();
+                        try { cache.put(key, result); } finally { cacheLock.writeLock().unlock(); }
+                    }
                 } catch (Exception e) {
                     LOGGER.warn("Failed to get chunk [{}] {},{}: {}", dimension, chunkX, chunkZ, e.getMessage());
                 } finally {

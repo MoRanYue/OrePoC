@@ -125,7 +125,10 @@ public class OreApiHandler implements HttpHandler {
             generateAndCache(world, cx, cz);
         }
 
-        return cache.get(cx, cz);
+        // For ungenerated chunks, generateAndCache only triggers async generation
+        // without caching; the cache will still be null here — return empty list.
+        List<OrePosition> result = cache.get(cx, cz);
+        return result != null ? result : Collections.emptyList();
     }
 
     /**
@@ -160,9 +163,16 @@ public class OreApiHandler implements HttpHandler {
     }
 
     private void generateAndCache(org.bukkit.World world, int cx, int cz) {
-        List<OrePosition> ores = scanner.scanChunk(world, cx, cz);
-        cache.put(cx, cz, ores);
-        plugin.getLogger().fine("Generated " + ores.size() + " ores for chunk " + cx + "," + cz);
+        // If the chunk is already generated, scan synchronously and cache immediately.
+        // For ungenerated chunks, scanChunk() triggers async generation and returns empty;
+        // the async callback handles caching on its own — don't cache the empty placeholder.
+        if (world.isChunkGenerated(cx, cz)) {
+            List<OrePosition> ores = scanner.scanChunk(world, cx, cz);
+            cache.put(cx, cz, ores);
+            plugin.getLogger().fine("Generated " + ores.size() + " ores for chunk " + cx + "," + cz);
+        } else {
+            scanner.scanChunk(world, cx, cz);
+        }
     }
 
     /** Convert a list of OrePositions to a JsonArray with proper JsonObject elements. */

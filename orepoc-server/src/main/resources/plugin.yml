@@ -1,4 +1,4 @@
-name: Ore PoC Server
+name: OrePocServer
 version: ${version}
 main: io.github.moranyue.orepocserver.OrePocServerPlugin
 api-version: '26.1.2'
