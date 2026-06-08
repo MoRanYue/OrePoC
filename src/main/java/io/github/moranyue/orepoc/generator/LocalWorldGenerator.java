@@ -442,8 +442,9 @@ public final class LocalWorldGenerator {
                                     // Save original before modifying
                                     saveOriginalState(pos, state);
 
-                                    section.setBlockState(x, y, z, Blocks.STONE.defaultBlockState());
-                                    level.sendBlockUpdated(pos, state, Blocks.STONE.defaultBlockState(), 3);
+                                    BlockState base = getBaseBlockForDimension(pos);
+                                    section.setBlockState(x, y, z, base);
+                                    level.sendBlockUpdated(pos, state, base, 3);
                                     clearedCount++;
                                 }
                             }
@@ -483,6 +484,34 @@ public final class LocalWorldGenerator {
             || state.is(Blocks.AMETHYST_BLOCK)
             || state.is(Blocks.GILDED_BLACKSTONE)
             || state.is(Blocks.BUDDING_AMETHYST);
+    }
+
+    /**
+     * Get the appropriate base block for the current dimension.
+     * <p>
+     * - Overworld: STONE (y ≥ 0) / DEEPSLATE (y < 0)
+     * - Nether:    NETHERRACK (always)
+     * - End:       END_STONE (always)
+     * <p>
+     * This prevents overworld stone from appearing in the Nether/End
+     * when clearing fake ores or reverting applied positions.
+     */
+    public static BlockState getBaseBlockForDimension(BlockPos pos) {
+        net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+        if (mc.level != null) {
+            String dimension = mc.level.dimension().identifier().toString();
+            return switch (dimension) {
+                case "minecraft:the_nether" -> Blocks.NETHERRACK.defaultBlockState();
+                case "minecraft:the_end" -> Blocks.END_STONE.defaultBlockState();
+                default -> pos.getY() < 0
+                    ? Blocks.DEEPSLATE.defaultBlockState()
+                    : Blocks.STONE.defaultBlockState();
+            };
+        }
+        // Fallback
+        return pos.getY() < 0
+            ? Blocks.DEEPSLATE.defaultBlockState()
+            : Blocks.STONE.defaultBlockState();
     }
 
     public Map<BlockPos, BlockState> getChunkOres(int chunkX, int chunkZ) {
@@ -701,9 +730,7 @@ public final class LocalWorldGenerator {
                 // Save original state before reverting
                 saveOriginalState(pos, current);
 
-                BlockState base = pos.getY() < 0
-                    ? Blocks.DEEPSLATE.defaultBlockState()
-                    : Blocks.STONE.defaultBlockState();
+                BlockState base = getBaseBlockForDimension(pos);
                 chunk.setBlockState(pos, base, 0);
                 level.sendBlockUpdated(pos, current, base, 3);
                 reverted++;
@@ -779,9 +806,7 @@ public final class LocalWorldGenerator {
                                 // Save original before modifying
                                 saveOriginalState(pos, state);
 
-                                BlockState base = pos.getY() < 0
-                                    ? Blocks.DEEPSLATE.defaultBlockState()
-                                    : Blocks.STONE.defaultBlockState();
+                                BlockState base = getBaseBlockForDimension(pos);
                                 section.setBlockState(x, y, z, base);
                                 level.sendBlockUpdated(pos, state, base, 3);
                                 cleared++;

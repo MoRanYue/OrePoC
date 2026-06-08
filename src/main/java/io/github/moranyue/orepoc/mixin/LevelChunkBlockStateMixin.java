@@ -37,12 +37,9 @@ public class LevelChunkBlockStateMixin {
             return;
         }
 
-        // Step 2: No prediction, but the chunk has an ore block — hide it (show stone).
+        // Step 2: No prediction, but the chunk has an ore block — hide it (show dimension-appropriate base block).
         if (isOreBlock(original)) {
-            BlockState base = pos.getY() < 0
-                ? Blocks.DEEPSLATE.defaultBlockState()
-                : Blocks.STONE.defaultBlockState();
-            cir.setReturnValue(base);
+            cir.setReturnValue(LocalWorldGenerator.getBaseBlockForDimension(pos));
         }
         // Step 3: Otherwise, leave the original block state unchanged.
     }

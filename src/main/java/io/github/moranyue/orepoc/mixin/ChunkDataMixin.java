@@ -110,8 +110,9 @@ public class ChunkDataMixin {
                         if (isOreBlock(state)) {
                             // Save original server state before clearing
                             LocalWorldGenerator.INSTANCE.saveOriginalState(pos, state);
-                            section.setBlockState(x, y, z, net.minecraft.world.level.block.Blocks.STONE.defaultBlockState());
-                            level.sendBlockUpdated(pos, state, net.minecraft.world.level.block.Blocks.STONE.defaultBlockState(), 3);
+                            BlockState base = LocalWorldGenerator.getBaseBlockForDimension(pos);
+                            section.setBlockState(x, y, z, base);
+                            level.sendBlockUpdated(pos, state, base, 3);
                             clearedCount++;
                         }
                     }
